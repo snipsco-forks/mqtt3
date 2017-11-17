@@ -163,7 +163,7 @@ pub trait MqttRead: ReadBytesExt {
             },
             _ => {
                 let will_topic = try!(self.read_mqtt_string());
-                let will_message = try!(self.read_mqtt_string());
+                let will_message = try!(self.read_mqtt_binary());
                 let will_qod = try!(QoS::from_u8((connect_flags & 0b11000) >> 3));
                 Some(LastWill {
                     topic: will_topic,
@@ -293,10 +293,15 @@ pub trait MqttRead: ReadBytesExt {
         Ok(payload)
     }
 
-    fn read_mqtt_string(&mut self) -> Result<String> {
+    fn read_mqtt_binary(&mut self) -> Result<Vec<u8>> {
         let len = try!(self.read_u16::<BigEndian>()) as usize;
         let mut data = Vec::with_capacity(len);
         try!(self.take(len as u64).read_to_end(&mut data));
+        Ok(data)
+    }
+
+    fn read_mqtt_string(&mut self) -> Result<String> {
+        let data = try!(self.read_mqtt_binary());
         Ok(try!(String::from_utf8(data)))
     }
 
@@ -366,7 +371,7 @@ mod test {
             clean_session: true,
             last_will: Some(LastWill {
                 topic: "/a".to_owned(),
-                message: "offline".to_owned(),
+                message: b"offline".to_vec(),
                 retain: false,
                 qos: QoS::AtLeastOnce
             }),

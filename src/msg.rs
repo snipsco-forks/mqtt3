@@ -35,7 +35,7 @@ impl Message {
             qos: last_will.qos,
             retain: last_will.retain,
             pid: None,
-            payload: Arc::new(last_will.message.into_bytes())
+            payload: Arc::new(last_will.message)
         })
     }
 

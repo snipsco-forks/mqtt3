@@ -44,7 +44,7 @@ pub trait MqttWrite: WriteBytesExt {
                 try!(self.write_mqtt_string(connect.client_id.as_ref()));
                 if let Some(ref last_will) = connect.last_will {
                     try!(self.write_mqtt_string(last_will.topic.as_ref()));
-                    try!(self.write_mqtt_string(last_will.message.as_ref()));
+                    try!(self.write_mqtt_binary(last_will.message.as_ref()));
                 }
                 if let Some(ref username) = connect.username {
                     try!(self.write_mqtt_string(username));
@@ -149,8 +149,12 @@ pub trait MqttWrite: WriteBytesExt {
     }
 
     fn write_mqtt_string(&mut self, string: &str) -> Result<()> {
-        try!(self.write_u16::<BigEndian>(string.len() as u16));
-        try!(self.write(string.as_bytes()));
+        self.write_mqtt_binary(string.as_bytes())
+    }
+
+    fn write_mqtt_binary(&mut self, bytes: &[u8]) -> Result<()> {
+        try!(self.write_u16::<BigEndian>(bytes.len() as u16));
+        try!(self.write(bytes));
         Ok(())
     }
 
@@ -203,7 +207,7 @@ mod test {
             clean_session: true,
             last_will: Some(LastWill {
                 topic: "/a".to_owned(),
-                message: "offline".to_owned(),
+                message: b"offline".to_vec(),
                 retain: false,
                 qos: QoS::AtLeastOnce
             }),

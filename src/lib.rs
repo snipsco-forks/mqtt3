@@ -303,7 +303,7 @@ impl Header {
 #[derive(Debug, Clone, PartialEq)]
 pub struct LastWill {
     pub topic: String,
-    pub message: String,
+    pub message: Vec<u8>,
     pub qos: QoS,
     pub retain: bool
 }
